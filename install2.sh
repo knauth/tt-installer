@@ -49,13 +49,11 @@ SKIP_INSTALL_HUGEPAGES=${TT_SKIP_INSTALL_HUGEPAGES:-1}
 # Skip tt-flash and firmware update flag (set to 0 to skip)
 SKIP_UPDATE_FIRMWARE=${TT_SKIP_UPDATE_FIRMWARE:-1}
 
-# Docker installation flag (set to 1 to install)
+# Docker and tt-metalium installation flags
 INSTALL_DOCKER=${TT_INSTALL_DOCKER:-0}
-
-# tt-metalium Docker Compose installation flag (set to 1 to install)
 INSTALL_METALIUM=${TT_INSTALL_METALIUM:-0}
 
-# tt-metalium repository and tag options
+# tt-metalium repository and tag options (optional assignment variables)
 METALIUM_REPO=${TT_METALIUM_REPO:-"ghcr.io/tenstorrent/tt-metal/tt-metalium-ubuntu-22.04-amd64-release"}
 METALIUM_TAG=${TT_METALIUM_TAG:-"latest-rc"}
 
@@ -408,9 +406,9 @@ EOF
 		log "${METALIUM_SCRIPT_DIR}/${METALIUM_SCRIPT_NAME}"
 	fi
 	
-	# Pull the Docker image
+	# Pull the Docker image using sudo to avoid group membership issues
 	log "Pulling the tt-metalium Docker image (this may take a while)..."
-	docker pull "${METALIUM_REPO}:${METALIUM_TAG}" || {
+	sudo docker pull "${METALIUM_REPO}:${METALIUM_TAG}" || {
 		error "Failed to pull Docker image"
 		return 1
 	}
@@ -426,60 +424,27 @@ EOF
 	return 0
 }
 
-# Get Docker and tt-metalium installation choice interactively or use default
-get_docker_metalium_choice() {
-	# Check if environment variables are set
+# Function to get tt-metalium installation choice
+get_metalium_choice() {
+	# Check if environment variable is set
 	if [[ -n "${TT_INSTALL_METALIUM+x}" ]]; then
 		log "Using tt-metalium installation preference from environment variable"
-		# If tt-metalium is requested, ensure Docker is also installed
-		if [[ "${INSTALL_METALIUM}" = "1" ]]; then
-			INSTALL_DOCKER=1
-			log "Docker installation enabled (required for tt-metalium)"
-		fi
 		return
-	# Otherwise, if in non-interactive mode, use the defaults
+	# Otherwise, if in non-interactive mode, use the default
 	elif [[ "${NON_INTERATIVE_MODE}" = "0" ]]; then
 		log "Non-interactive mode, using default installation preferences"
-		# If tt-metalium is requested, ensure Docker is also installed
-		if [[ "${INSTALL_METALIUM}" = "1" ]]; then
-			INSTALL_DOCKER=1
-			log "Docker installation enabled (required for tt-metalium)"
-		fi
 		return
 	fi
 
-	# Interactive prompt - combined for Docker and tt-metalium
-	log "Would you like to install Docker and the tt-metalium environment?"
-	echo "1. No installation"
-	echo "2. Install Docker only"
-	echo "3. Install Docker and tt-metalium (recommended for Tenstorrent development)"
-	read -rp "Enter your choice (1-3): " install_choice
-	echo # newline
-
-	case ${install_choice} in
-		1)
-			INSTALL_DOCKER=0
-			INSTALL_METALIUM=0
-			log "Skipping Docker and tt-metalium installation"
-			;;
-		2)
-			INSTALL_DOCKER=1
-			INSTALL_METALIUM=0
-			log "Docker will be installed"
-			;;
-		3|"")
-			INSTALL_DOCKER=1
-			INSTALL_METALIUM=1
-			log "Docker and tt-metalium will be installed"
-			# If selecting tt-metalium, also get repository and tag
-			get_metalium_repo_tag
-			;;
-		*)
-			log "Invalid choice, defaulting to no installation"
-			INSTALL_DOCKER=0
-			INSTALL_METALIUM=0
-			;;
-	esac
+	# Interactive prompt for tt-metalium
+	if confirm "Would you like to install the tt-metalium Docker environment? (requires Docker)"; then
+		INSTALL_METALIUM=1
+		# If tt-metalium is selected, Docker is required
+		INSTALL_DOCKER=1
+		log "Docker will be installed (required for tt-metalium)"
+	else
+		INSTALL_METALIUM=0
+	fi
 }
 
 # Get tt-metalium repository and tag interactively or use default
@@ -577,18 +542,6 @@ main() {
 
 	if [[ "${IS_UBUNTU_20}" = "0" ]]; then
 		warn "Ubuntu 20 is deprecated and support will be removed in a future release!"
-	fi
-
-	# Docker and tt-metalium installation
-	get_docker_metalium_choice
-	if [[ "${INSTALL_DOCKER}" = "1" ]]; then
-		if ! check_docker_installed; then
-			install_docker
-		fi
-	fi
-	
-	if [[ "${INSTALL_METALIUM}" = "1" ]]; then
-		install_tt_metalium
 	fi
 
 	# Python package installation preference
@@ -722,6 +675,21 @@ main() {
 	log "Installing System Management Interface"
 	${PYTHON_INSTALL_CMD} git+https://github.com/tenstorrent/tt-smi
 
+	# Ask about Docker/tt-metalium installation after all other components
+	get_metalium_choice
+	
+	# Install Docker if needed
+	if [[ "${INSTALL_DOCKER}" = "1" ]]; then
+		if ! check_docker_installed; then
+			install_docker
+		fi
+	fi
+	
+	# Install tt-metalium if requested
+	if [[ "${INSTALL_METALIUM}" = "1" ]]; then
+		install_tt_metalium
+	fi
+
 	log "Installation completed successfully!"
 	log "Installation log saved to: ${LOG_FILE}"
 	if [[ "${INSTALLED_IN_VENV}" = "0" ]]; then
@@ -747,7 +715,7 @@ main() {
 		fi
 	fi
 }
-
+	
 # Start installation
 main
 

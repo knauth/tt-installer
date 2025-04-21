@@ -544,9 +544,13 @@ main() {
 		warn "Ubuntu 20 is deprecated and support will be removed in a future release!"
 	fi
 
+
 	# Python package installation preference
 	get_new_venv_location
 	get_python_choice
+
+	# Ask about Docker/tt-metalium installation after all other components
+	get_metalium_choice
 
 	# Enforce restrictions on Ubuntu 20
 	if [[ "${IS_UBUNTU_20}" = "0" && "${PYTHON_CHOICE}" = "4" ]]; then
@@ -675,9 +679,6 @@ main() {
 	log "Installing System Management Interface"
 	${PYTHON_INSTALL_CMD} git+https://github.com/tenstorrent/tt-smi
 
-	# Ask about Docker/tt-metalium installation after all other components
-	get_metalium_choice
-	
 	# Install Docker if needed
 	if [[ "${INSTALL_DOCKER}" = "1" ]]; then
 		if ! check_docker_installed; then

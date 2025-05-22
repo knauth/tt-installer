@@ -10,6 +10,7 @@ jobs:
   test-installer:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         distro: 
           - ubuntu:20.04
@@ -57,6 +58,7 @@ jobs:
             export TT_SKIP_INSTALL_KMD=0
             export TT_SKIP_INSTALL_HUGEPAGES=0
             export TT_SKIP_UPDATE_FIRMWARE=0
+            export TT_SKIP_INSTALL_METALIUM_CONTAINER=0
             export TT_PYTHON_CHOICE=3
             export TT_REBOOT_OPTION=2
             
@@ -73,6 +75,7 @@ jobs:
   test-fedora:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         distro:
           - fedora:39
@@ -108,6 +111,7 @@ jobs:
             export TT_SKIP_INSTALL_KMD=0
             export TT_SKIP_INSTALL_HUGEPAGES=0
             export TT_SKIP_UPDATE_FIRMWARE=0
+            export TT_SKIP_INSTALL_METALIUM_CONTAINER=0
             export TT_PYTHON_CHOICE=3
             export TT_REBOOT_OPTION=2
             

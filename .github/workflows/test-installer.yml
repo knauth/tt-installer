@@ -35,11 +35,9 @@ jobs:
           # Update package manager and install sudo
           if command -v apt >/dev/null; then
             export DEBIAN_FRONTEND=noninteractive
+            export TZ=UTC
             apt update
             apt install -y wget git python3-pip jq curl sudo
-          elif command -v dnf >/dev/null; then
-            dnf update -y
-            dnf install -y wget git python3-pip jq curl sudo
           fi
 
           # Create a non-root user for testing

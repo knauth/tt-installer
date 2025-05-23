@@ -34,6 +34,7 @@ jobs:
 
           # Update package manager and install sudo
           if command -v apt >/dev/null; then
+            export DEBIAN_FRONTEND=noninteractive
             apt update
             apt install -y wget git python3-pip jq curl sudo
           elif command -v dnf >/dev/null; then

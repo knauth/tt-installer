@@ -34,8 +34,6 @@ jobs:
 
           # Update package manager and install sudo
           if command -v apt >/dev/null; then
-            export DEBIAN_FRONTEND=noninteractive
-            export TZ=UTC
             apt update
             apt install -y wget git python3-pip jq curl sudo
           fi
@@ -51,6 +49,10 @@ jobs:
           # Switch to test user and run installer
           su - testuser -c '
             cd /home/testuser/workspace
+
+            # Timezone setup
+            export DEBIAN_FRONTEND=noninteractive
+            export TZ=UTC
 
             # Test configuration (skip hardware-dependent steps)
             export TT_MODE_NON_INTERACTIVE=0

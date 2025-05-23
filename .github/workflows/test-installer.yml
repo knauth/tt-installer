@@ -51,8 +51,7 @@ jobs:
             cd /home/testuser/workspace
 
             # Timezone setup
-            unlink /etc/localtime
-            ln -fs /usr/share/zoneinfo/UTC /etc/localtime
+            dpkg-reconfigure -f noninteractive tzdata
             export DEBIAN_FRONTEND=noninteractive
 
             # Test configuration (skip hardware-dependent steps)

@@ -52,7 +52,7 @@ jobs:
 
             # Timezone setup
             export DEBIAN_FRONTEND=noninteractive
-            export TZ=UTC
+            ln -fs /usr/share/zoneinfo/UTC /etc/localtime
 
             # Test configuration (skip hardware-dependent steps)
             export TT_MODE_NON_INTERACTIVE=0
